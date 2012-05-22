@@ -3,7 +3,7 @@ PHP Wrapper Class to communicate with the RESTful Closure Compiler Service API.
 
 This package is intended for use of request compiled JavaScript source code from the Closure Compiler service, by providing methods to send HTTP POST Requests to the Closure Compiler's RESTful Service API.
 
-## What is the Closure Comiler?
+## What is the Closure Compiler?
 
 The Closure Compiler is a tool, developed by Google, for making JavaScript run faster. The clue: Unlike similar tools, it doesn't only shrink the input code. It compiles from JavaScript to better JavaScript.
 
@@ -18,7 +18,7 @@ More information about the Closure Compiler Service can be found here: https://d
 <?php
 try {
   // create a new instance of CC_Service
-  $cc = new new CC_Service();
+  $cc = new CC_Service();
 
   // define a new JavaScript resource to be compiled
   $code_url = 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js';

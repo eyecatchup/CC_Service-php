@@ -187,7 +187,7 @@ interface CC_Service_INI
  *
  *  <code>
  *  // create a new instance of CC_Service
- *  $cc = new new CC_Service();
+ *  $cc = new CC_Service();
  *
  *  // define a new JavaScript resource to be compiled
  *  $code_url = 'http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js';
