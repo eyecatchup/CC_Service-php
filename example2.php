@@ -1,26 +1,20 @@
 <?php
 require('CC_Service.php');
 try {
-  // create a new instance of CC_Service
-  $cc = new CC_Service();
-
   // define a new JavaScript resource to be compiled
   $filename = 'jquery.js';
   $code_url = "http://ajax.googleapis.com/ajax/libs/jquery/1/$filename";
-  $cc->addScript($code_url);
+  
+  // create a new instance of CC_Service
+  $cc = new CC_Service($code_url);
 
-  // optionally, define other request parameters, than defaults
-  $cc->setParam('compilation_level', 'WHITESPACE_ONLY');
-  $cc->setParam('formatting', 'pretty_print');
-
-  // request compiled the JavaScript from the API
-  $compiledJs = $cc->postService();
-
+  // request compiled JS from the API and save it to a local file
   $now = date("YmdHis");
   $savefile = str_replace('.js', ".min.$now.js", $filename);
-  file_put_contents(trim($savefile), $compiledJs);
-  // saves the compiled JavaScript to local file
-  print "Saved compiled JavaScript to $savefile";
+  
+  file_put_contents(trim($savefile), $cc->postService());
+  
+  print "Saved compiled version of '$code_url' to '$savefile'.";
 }
 catch (CC_Service_Exception $e) {
   die($e->getMessage());
