@@ -39,3 +39,5 @@ catch (CC_Service_Exception $e)
   die($e->getMessage());
 }
 ```
+
+The request parameter defaults are set to use the API's defaults. They are explained and can be changed in the class interface https://github.com/eyecatchup/CC_Service-php/blob/master/CC_Service.php#L76
