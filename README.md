@@ -11,8 +11,9 @@ It parses your JavaScript, analyzes it, removes dead code and rewrites and minim
 
 More information about the Closure Compiler Service can be found here: https://developers.google.com/closure/compiler/
 
-## BRIEF EXAMPLE OF USE
+## Usage
 
+### Brief example of use
 ```php
 <?php
 try {
@@ -40,4 +41,5 @@ catch (CC_Service_Exception $e)
 }
 ```
 
+### Service interface
 The request parameter defaults are set to use the API's defaults. They are explained and can be changed in the class interface https://github.com/eyecatchup/CC_Service-php/blob/master/CC_Service.php#L76
