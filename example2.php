@@ -9,9 +9,7 @@ try {
   $cc = new CC_Service($code_url);
 
   // request compiled JS from the API and save it to a local file
-  $now = date("YmdHis");
-  $savefile = str_replace('.js', ".min.$now.js", $filename);
-  
+  $savefile = str_replace('.js', '.min.'.time().'.js', $filename); 
   file_put_contents(trim($savefile), $cc->postService());
   
   print "Saved compiled version of '$code_url' to '$savefile'.";
