@@ -48,6 +48,6 @@ catch (CC_Service_Exception $e)
 ### Service interface
 The request parameter defaults are set to use the API's defaults. They are explained and can be changed in the class interface https://github.com/eyecatchup/CC_Service-php/blob/master/CC_Service.php#L76
 
-(c) 2012, Stephan Schmitz <eyecatchup@gmail.com>     
-License: http://eyecatchup.mit-license.org/   
-URL: https://github.com/eyecatchup/SEOstats   
+URL: https://github.com/eyecatchup/CC_Service-php/      
+License: http://eyecatchup.mit-license.org/     
+(c) 2012, Stephan Schmitz <eyecatchup@gmail.com>  
