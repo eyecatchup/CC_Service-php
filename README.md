@@ -11,6 +11,10 @@ It parses your JavaScript, analyzes it, removes dead code and rewrites and minim
 
 More information about the Closure Compiler Service can be found here: https://developers.google.com/closure/compiler/
 
+## Download
+The latest stable version can be downloaded from the downloads tab, or using the following link:
+https://github.com/downloads/eyecatchup/CC_Service-php/CC_Service-php-1.0.0.zip
+
 ## Usage
 
 ### Brief example of use
