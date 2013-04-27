@@ -179,6 +179,20 @@ interface CC_Service_INI
     const formatting = '';
     const use_closure_library = '';
     const warning_level = '';
+	
+    #########################################################
+    ## PASTEBIN.COM API KEY
+    #########################################################
+
+	/*
+	 * The closure compiler can receive Javascript as a string or as public URL. 
+	 * Since the string option is limited in length, we prefer the code_url-method. 
+	 * However, since we want to compile local scripts, that don't have a public URL,
+	 * we use pastebin.com's API to create a temporarily, public available URL for 
+	 * our scripts by creating a temp paste and passing the raw paste URL to the compiler.
+	 * Therefore, you need an API key, which is freely available at pastebin.com.
+	 */
+    const pastebin_apikey = '';
 }
 
 /**  CC_Service                     Access Closure Compiler API
@@ -217,7 +231,7 @@ interface CC_Service_INI
 class CC_Service implements CC_Service_INI
 {
     const CC_POST_URL = 'http://closure-compiler.appspot.com/compile';
-    private $Service_URL;
+    private $Service_URL, $pastebinApiKey;
     public  $Request_Params;
     protected $Valid_Params;
 
@@ -228,6 +242,7 @@ class CC_Service implements CC_Service_INI
         $this->Service_URL    = CC_Service::CC_POST_URL;
         $this->Request_Params = self::initRequestParams();
         $this->Valid_Params   = self::getValidParams();
+        $this->pastebinApiKey = CC_Service_INI::pastebin_apikey;
 
         self::setParam('compilation_level',
                 CC_Service_INI::compilation_level);
@@ -259,6 +274,7 @@ class CC_Service implements CC_Service_INI
             endforeach;
         endif;
     }
+	
     /*  postService ()                 Triggers a POST data request to the compiler.
      */
     public function postService () {
@@ -275,6 +291,10 @@ class CC_Service implements CC_Service_INI
     public function setParam ($param, $val) {
         return (bool) self::_setParam ($param, $val);
     }
+	
+	public function getTempUrl($data) {
+	    return self::_getTempUrl($data);
+	}
 
     /* _addScript ($str)               Private setter for script resources to be compiled.
      */
@@ -289,14 +309,50 @@ class CC_Service implements CC_Service_INI
                 // add the item to the existing array and re-asign
             else :
                 $code_url[] = $str;
+				//print "adding code url: $str\n";
             endif;
             $this->Request_Params['Required']['code_url'] = $code_url;
+			//print_r($code_url);
             return TRUE;
         else :
             // unknown error
             return FALSE;
         endif;
     }
+	
+	private static function _getTempUrl($data) {
+		if (!is_array($data)) {
+			return false;
+		}
+		else {		
+			// merge all scripts into a single string
+			$scriptData = '';  
+			foreach ($data as $script) {
+				$localFile = str_replace('/', DIRECTORY_SEPARATOR, $script);
+				if (file_exists($localFile)) {
+					$scriptData .= trim(file_get_contents($localFile));
+				}
+			}
+			
+			// temporarily save the combined string online to be available for the compiler
+			$pb = HttpRequest::sendPostDataArray('http://pastebin.com/api/api_post.php', array(
+				'api_dev_key'           => $this->getPastebinApiKey(),			// your dev key
+				'api_option'            => 'paste',                   			// action to perform
+				'api_paste_code'        => utf8_decode($scriptData),    		// the paste text
+				'api_paste_private'     => '1',     							// 0=public 1=unlisted 2=private
+				'api_paste_expire_date' => '1H',    							// paste expires in 1h
+			));
+
+			if (is_array($pb) && isset($pb['error'])) {
+				return false;
+			}
+			else {
+				// return the temp paste url (which can now be used as value for the 'code_url' parameter.
+				return str_replace('m/', 'm/raw.php?i=', $pb);
+			}				
+		}
+	}
+	
     /*  _postService ()                Checks params and sends POST data request to the compiler.
      */
     private function _postService () {
@@ -312,7 +368,7 @@ class CC_Service implements CC_Service_INI
             elseif ($k == 'code_url') :
                 if (is_array($v) AND sizeof($v) > 0) :
                     foreach ($v AS $code_url) :
-                        $postDataArray['code_url'] = $code_url;
+                        $postDataArray['code_url'][] = $code_url;
                     endforeach;
                 else :  $missing[] = 'code_url';
                 endif;
@@ -331,6 +387,7 @@ class CC_Service implements CC_Service_INI
             return HttpRequest::sendPostDataArray(self::CC_POST_URL, $postDataArray);
         endif;
     }
+	
     /*  _setParam ($param, $val)       Private setter for request parameters
      *  @access public
      *  @param  String    $param       The parameter name
@@ -373,6 +430,7 @@ class CC_Service implements CC_Service_INI
         else : throw new CC_Service_Exception("Parameter $param doesn't exist.");
         endif;
     }
+	
     /* _verifyScript ($str)            Checks if the input string is a valid script resource.
      */
     private function _verifyScript ($str) {
@@ -394,6 +452,18 @@ class CC_Service implements CC_Service_INI
             endif;
         endif;
     }
+	
+	private function getPastebinApiKey() 
+	{
+		if (32 !== strlen($this->pastebinApiKey)) {
+			$e = 'Invalid "pasebin_apikey" constant in CC_Service_INI interface (see inline documentation).';
+			throw new CC_Service_Exception($e);
+			die(0);
+		}
+		else {
+			return $this->pastebinApiKey;
+		}
+	}
 
     /* initRequestParams ()            Load default parameter values from interface.
      */
@@ -416,6 +486,7 @@ class CC_Service implements CC_Service_INI
             )
         );
     }
+	
     /* getValidParams ()               Get an array conatining all valid parameter values.
      */
     public function getValidParams () {
@@ -442,27 +513,28 @@ class CC_Service implements CC_Service_INI
  */
 class HttpRequest extends CC_Service
 {
-    public static function sendPostDataArray($a, $b)
-    {
+    public static function sendPostDataArray($a, $b) {
         $postUrl     = $a;
         // Parameter key value pair array expected
         // eg array('param' => 'value', 'filter' => 'none')
-        $postRequest = http_build_query($b);
-
+        $postRequest  = http_build_query($b);
+		$fixedRequest = preg_replace('/url%5B\d%5D/', 'url', $postRequest);
+		#print $fixedRequest;
+		
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $postUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
         curl_setopt($ch, CURLOPT_POST, TRUE);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postRequest);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $fixedRequest);
         $output = curl_exec($ch);
         $info = curl_getinfo($ch);
         curl_close($ch);
         if($info['http_code'] == 200) {
             return $output;
         }
-        else { return FALSE; }
+        else { return array('error' => $info); }
     }
 
     /**
@@ -473,8 +545,7 @@ class HttpRequest extends CC_Service
      *                                          initialized object URL.
      * @return        intval                    Returns a HTTP status code.
      */
-    public static function getHttpCode($url)
-    {
+    public static function getHttpCode($url) {
         $ch = curl_init($url);
         curl_setopt($ch,CURLOPT_USERAGENT,'' );
         curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
@@ -499,4 +570,3 @@ class CC_Service_Exception extends Exception
         exit();
     }
 }
-//eof
