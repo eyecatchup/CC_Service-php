@@ -1,5 +1,5 @@
 <?php
-require('CC_Service.php');
+require 'CC_Service.php';
 try {
   // define a new JavaScript resource to be compiled
   $filename = 'jquery.js';
